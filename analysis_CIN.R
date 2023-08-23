@@ -200,6 +200,21 @@ cytoband_18$totalCIN_HRR = cytoband_18$general_cin_HRR + cytoband_18$cn_cin_HRR
 
 
 
+
+
+
+################# End functions for loading data
+
+
+
+
+
+
+
+
+
+
+
 ##### Some of the figures such as boxplot HRD high and HRD low boxplot for CIN results
 general_cin_all_type = ggplot(data_test_type, aes(x = ProjectID, y = general_cin, fill = HRDtype)) +
   geom_boxplot() +
@@ -315,6 +330,31 @@ ggsave('../data/figures/boxplot_cn_cin_17.png',cn_cin_17,width = 8.63, height = 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+############################3
+#############################
+############################ First heatmaps analysis
+## 
+
+
 pattern <- "^chr[1-9][0-9]?_average_cn$"
 
 
@@ -327,7 +367,7 @@ column_numbers <- sub("^chr([1-9][0-9]?).*", "\\1",  grep(pattern, names(data_17
 # Rename the matching columns
 
 
-####### All copy number
+####### Heatmap avarage copy number all samples
 
 
 new_column_names <- paste0("chr", column_numbers)
@@ -355,9 +395,7 @@ ha = HeatmapAnnotation(Cancertype = subset_df$ProjectID)
 Heatmap(matrix_t, cluster_rows = FALSE, cluster_columns = FALSE, top_annotation  = ha, show_column_names  = FALSE, raster_quality = 10, column_split = subset_df$ProjectID, column_title=NULL, border = TRUE,  column_gap = unit(0, "mm"), name = 'Average copy number')
 
 
-##### Mean average copy number
-
-
+##### Heatmap with the mean 'average copy number' per cancer type, sample level
 new_df <- data_17_cohorts %>%
   group_by(ProjectID) %>%
   summarise(
@@ -410,7 +448,9 @@ Heatmap(matrix_2, cluster_rows = FALSE, cluster_columns = FALSE, col = col_fun)
 
 
 
-
+#############################
+############################
+### Correlation CIN measures and HRD type, sample level
 
 data_17_cohorts$Type_binary <- ifelse(data_17_cohorts$HRDtype == 'High', 1, 0)
 
@@ -439,7 +479,9 @@ Heatmap(corrmatrix, show_column_dend = FALSE, show_row_dend = FALSE, name = 'Poi
 
 
 
-
+#############################
+############################
+### Correlation CIN measures and HRD score, chromosome level
 
 pattern_avg <- "^chr[1-9][0-9]?_average_cn$"
 pattern_general <- "^chr[1-9][0-9]?_general_cin$"
@@ -472,7 +514,9 @@ Heatmap(corrmatrix_chromosome,cluster_rows = FALSE, row_names_gp = gpar(fontsize
 
 
 
-
+#############################
+############################
+### Correlation CIN measures and HRD score, sample level
 
 scores = c('general_cin', 'cn_cin', 'n_cn_loh', 'n_cn_gain', 'n_cn_amp', 'n_homo_del', 'n_hemi_del', 'n_gain', 'n_amp')
 
@@ -505,17 +549,13 @@ Heatmap(corrmatrix, show_column_dend = FALSE, show_row_dend = FALSE, name = 'Spe
 ###### Colors for figures (Heatmaps)
 num_colors <- 18
 
-# Generate a palette of visually distinct colors
-color_palette <- colorRampPalette(brewer.pal(12, "Paired"))(num_colors)
-
-# Create a named color palette
-named_palette <- setNames(color_palette, unique(data_test_type$ProjectID))
-
 qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
 col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
 sub_col_vector = col_vector[1:num_colors]
-named_palette <- setNames(sub_col_vector, unique(data_17_cohorts$ProjectID))
 
+## For general
+named_palette <- setNames(sub_col_vector, unique(data_17_cohorts$ProjectID))
+## For cytobands analysis
 named_palette <- setNames(sub_col_vector, unique(cytoband_18$ProjectID))
 
 
@@ -523,7 +563,7 @@ named_palette <- setNames(sub_col_vector, unique(cytoband_18$ProjectID))
 ################# Level: Chromosome ###### Plotting heatmaps
 
 
-
+## All samples for arm and chromosome level
 plotHeatmapChromosome = function(data_measurement, variable_list, color_vector, level, measure_full_name, measure_short_name, save = FALSE){
   
   subset_data = data_measurement[,variable_list]
@@ -584,7 +624,7 @@ plotHeatmapChromosome = function(data_measurement, variable_list, color_vector, 
   }
 }
 
-
+## Mean values per cancer type (and HRD type) for arm and chromosome level
 plotmeanHeatmapChromosome = function(data_measurement, variable_list, color_vector, level, measure_full_name, measure_short_name, save = FALSE){
   
   chr_order <- paste0("chr", 1:22)
@@ -659,7 +699,7 @@ plotmeanHeatmapChromosome = function(data_measurement, variable_list, color_vect
   }
 }
 
-
+################################## Chromosomes ###########################
 patterns = c("^chr[1-9][0-9]?_general_cin$", "^chr[1-9][0-9]?_cn_cin$", "^chr[1-9][0-9]?_number_cn_loh$",
              "^chr[1-9][0-9]?_number_cn_gain$", "^chr[1-9][0-9]?_number_cn_amp$", "^chr[1-9][0-9]?_number_homo_del$",
              "^chr[1-9][0-9]?_number_hemi_del$", "^chr[1-9][0-9]?_number_gain$", "^chr[1-9][0-9]?_number_amp$")
@@ -1049,7 +1089,7 @@ for (cancertype in ids){
 
 
 
-
+### Run the Chromosome, Arm and Cytoband analysis
 analysisFeatureAllLevels = function(feature, data, data_cytoband){
   
   pattern_chr = paste('^chr[1-9][0-9]?_',feature,'$',sep = '')
@@ -1061,6 +1101,7 @@ analysisFeatureAllLevels = function(feature, data, data_cytoband){
   analysisFeature(pattern_cyto, data_cytoband, 'cytoband', feature)
 }
 
+## Create the analysis output table
 analysisFeature = function(pattern, data, level, feature_name){
   
   features = grep(pattern, names(data), value = TRUE)
@@ -1116,12 +1157,16 @@ analysisFeature(pattern_cyto, cytoband_18, 'cytoband', 'cn_cin')
 cytoband_paad = cytoband_18[cytoband_18$ProjectID == 'TCGA-PAAD',]
 cytoband_chr20 = cytoband_paad[, c('HRDtype', 'chr20_q11.21_cn_cin')]
 
+
+### Creates analysis txt files for chromosome, arm and cytobands for a given feautres (CIN measure)
 analysisResultsAllLevel = function(feature, cyto_annotation = NULL){
   analysisResults(feature, 'chromosome',cyto_annotation)
   analysisResults(feature, 'arm',cyto_annotation)
   analysisResults(feature, 'cytoband', cyto_annotation)
 }
 
+
+## Creates the analysis txt file
 analysisResults = function(feature, level, cyto_annotation = NULL){
   file_path = paste('../data/analysis_',feature,'_',level,'.txt',sep = '')
   file_conn = file(file_path, "w")
@@ -1248,6 +1293,8 @@ analysisResults = function(feature, level, cyto_annotation = NULL){
   close(file_conn)
 }
 
+#### Create the txt files
+
 cytoband_HRR_annotation =  read.csv('../data/cytoband_HRRgenes_annotated.csv',row.names = 1)
 
 test = cytoband_HRR_annotation[cytoband_HRR_annotation$cytoband_chr == 'chr15_q26.1', 'symbol']
@@ -1346,7 +1393,7 @@ for (chr in chromosomes){
   
 }
 
-
+################## CN-CIN percentages ############################
 chromosomes = c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22)
 #chromosomes = c(17)
 data = read.csv('../data/cn_cin_chromosome_wilcoxon_pvalues.csv', sep = ',')
@@ -1411,78 +1458,8 @@ for (chr in chromosomes){
 
 
 
-plot = ggplot(result, aes(x = ProjectID, y = Percentage_number_homo_del + Percentage_number_hemi_del + Percentage_number_gain + Percentage_number_amp, fill = HRDtype)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Stacked Barplot by ProjectID and HRDtype",
-       x = "ProjectID", y = "Stacked Value",
-       fill = "HRDtype") +
-  theme_minimal()
-print(plot)
 
-break
-
-
-data_17_cohorts$new_general_cin = data_17_cohorts$chr11_general_cin + data_17_cohorts$chr4_general_cin + data_17_cohorts$chr5_general_cin + data_17_cohorts$chr14_general_cin + data_17_cohorts$chr22_general_cin
-
-ggplot(data_17_cohorts, aes(x = ProjectID, y = chr4_general_cin, fill = HRDtype)) +
-  geom_boxplot() +
-  labs(x = "Project ID", y = "General CIN HRR", fill = "HRD-Type")  +
-  ggtitle("General CIN HRR Cytobands, K-means") +
-  theme_bw()+
-  #ylim(0, 500)+
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
-  stat_compare_means(aes(group = HRDtype), method = 'wilcox.test', label ="p.signif") +
-  scale_fill_manual(values = c("High" = "#1F77B4", "Low" = "#E377C2"), 
-                    labels = c("HRD-high", "HRD-low"))
-
-###################################
-###################################
-# Cytoband analysis ###### Figures for general cin only using cytoband containing HRR genes + heatmaps
-
-general_cin_17_type_HRR = ggplot(cytoband_18, aes(x = ProjectID, y = general_cin_HRR, fill = HRDtype)) +
-  geom_boxplot() +
-  labs(x = "Project ID", y = "General CIN HRR", fill = "HRD-Type")  +
-  ggtitle("General CIN HRR Cytobands, K-means") +
-  theme_bw()+
-  #ylim(0, 500)+
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
-  stat_compare_means(aes(group = HRDtype), method = 't.test', label ="p.signif") +
-  scale_fill_manual(values = c("High" = "#1F77B4", "Low" = "#E377C2"), 
-                    labels = c("HRD-high", "HRD-low"))
-
-print(general_cin_17_type_HRR)
-ggsave('../data/figures/boxplot_general_cin_17_type_HRR.png',general_cin_17_type_HRR,width = 8.63, height = 5.71)
-
-cn_cin_17_type_HRR = ggplot(cytoband_18, aes(x = ProjectID, y = cn_cin_HRR, fill = HRDtype)) +
-  geom_boxplot() +
-  labs(x = "Project ID", y = "CN-CIN HRR", fill = "HRD-Type")  +
-  ggtitle("CN-CIN HRR Cytobands, K-means") +
-  theme_bw()+
-  #ylim(0, 500)+
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
-  stat_compare_means(aes(group = HRDtype), method = 't.test', label ="p.signif") +
-  scale_fill_manual(values = c("High" = "#1F77B4", "Low" = "#E377C2"), 
-                    labels = c("HRD-high", "HRD-low"))
-
-print(cn_cin_17_type_HRR)
-ggsave('../data/figures/boxplot_cn_cin_17_type_HRR.png',cn_cin_17_type_HRR,width = 8.63, height = 5.71)
-
-total_cin_17_type_HRR = ggplot(cytoband_18, aes(x = ProjectID, y = totalCIN_HRR, fill = HRDtype)) +
-  geom_boxplot() +
-  labs(x = "Project ID", y = "Total CIN HRR", fill = "HRD-Type")  +
-  ggtitle("Total CIN HRR Cytobands, K-means") +
-  theme_bw()+
-  #ylim(0, 500)+
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
-  stat_compare_means(aes(group = HRDtype), method = 't.test', label ="p.signif") +
-  scale_fill_manual(values = c("High" = "#1F77B4", "Low" = "#E377C2"), 
-                    labels = c("HRD-high", "HRD-low"))
-
-print(total_cin_17_type_HRR)
-ggsave('../data/figures/boxplot_total_cin_17_type_HRR.png',total_cin_17_type_HRR,width = 8.63, height = 5.71)
-
-
-
+#################33 Heatmap for Cytobands containing HRR genes
 plotmeanHeatmapCytoband = function(data_measurement, variable_list, color_vector, measure_full_name, measure_short_name, save = FALSE){
   
   
